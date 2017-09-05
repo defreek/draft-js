@@ -16,16 +16,16 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   <head>
     <meta charset="utf-8" />
     <title>Draft • Link Editor</title>
-    <link rel="stylesheet" href="../../../dist/Draft.css" />
+    <link rel="stylesheet" href="../../dist/Draft.css" />
   </head>
   <body>
     <div id="target"></div>
-    <script src="../../../node_modules/react/dist/react.js"></script>
-    <script src="../../../node_modules/react-dom/dist/react-dom.js"></script>
-    <script src="../../../node_modules/immutable/dist/immutable.js"></script>
-    <script src="../../../node_modules/es6-shim/es6-shim.js"></script>
+    <script src="../../node_modules/react/dist/react.js"></script>
+    <script src="../../node_modules/react-dom/dist/react-dom.js"></script>
+    <script src="../../node_modules/immutable/dist/immutable.js"></script>
+    <script src="../../node_modules/es6-shim/es6-shim.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.8.34/browser.js"></script>
-    <script src="../../../dist/Draft.js"></script>
+    <script src="../../dist/Draft.js"></script>
     <script type="text/babel">
       'use strict';
 
@@ -35,7 +35,6 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
         ContentState,
         Editor,
         EditorState,
-        Entity,
         RichUtils,
       } = Draft;
 
@@ -75,9 +74,21 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
           const {editorState} = this.state;
           const selection = editorState.getSelection();
           if (!selection.isCollapsed()) {
+            const contentState = editorState.getCurrentContent();
+            const startKey = editorState.getSelection().getStartKey();
+            const startOffset = editorState.getSelection().getStartOffset();
+            const blockWithLinkAtBeginning = contentState.getBlockForKey(startKey);
+            const linkKey = blockWithLinkAtBeginning.getEntityAt(startOffset);
+
+            let url = '';
+            if (linkKey) {
+              const linkInstance = contentState.getEntity(linkKey);
+              url = linkInstance.getData().url;
+            }
+
             this.setState({
               showURLInput: true,
-              urlValue: '',
+              urlValue: url,
             }, () => {
               setTimeout(() => this.refs.url.focus(), 0);
             });
@@ -87,12 +98,19 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
         _confirmLink(e) {
           e.preventDefault();
           const {editorState, urlValue} = this.state;
-          const entityKey = Entity.create('LINK', 'MUTABLE', {url: urlValue});
+          const contentState = editorState.getCurrentContent();
+          const contentStateWithEntity = contentState.createEntity(
+            'LINK',
+            'MUTABLE',
+            {url: urlValue},
+          );
+          const entityKey = contentStateWithEntity.getLastCreatedEntityKey();
+          const newEditorState = EditorState.set(editorState, { currentContent: contentStateWithEntity });
           this.setState({
             editorState: RichUtils.toggleLink(
-              editorState,
-              editorState.getSelection(),
-              entityKey
+              newEditorState,
+              newEditorState.getSelection(),
+              entityKey,
             ),
             showURLInput: false,
             urlValue: '',
@@ -173,13 +191,13 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
         }
       }
 
-      function findLinkEntities(contentBlock, callback) {
+      function findLinkEntities(contentState, contentBlock, callback) {
         contentBlock.findEntityRanges(
           (character) => {
             const entityKey = character.getEntity();
             return (
               entityKey !== null &&
-              Entity.get(entityKey).getType() === 'LINK'
+              contentState.getEntity(entityKey).getType() === 'LINK'
             );
           },
           callback
@@ -187,7 +205,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
       }
 
       const Link = (props) => {
-        const {url} = Entity.get(props.entityKey).getData();
+        const {url} = props.contentState.getEntity(props.entityKey).getData();
         return (
           <a href={url} style={styles.link}>
             {props.children}

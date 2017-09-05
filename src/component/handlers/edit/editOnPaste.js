@@ -61,7 +61,7 @@ function editOnPaste(editor: DraftEditor, e: SyntheticClipboardEvent): void {
           style: editorState.getCurrentInlineStyle(),
           entity: getEntityKeyForSelection(
             editorState.getCurrentContent(),
-            editorState.getSelection(),
+            editorState.getSelection()
           ),
         });
 
@@ -71,15 +71,15 @@ function editOnPaste(editor: DraftEditor, e: SyntheticClipboardEvent): void {
         var withInsertedText = DraftModifier.replaceWithFragment(
           editorState.getCurrentContent(),
           editorState.getSelection(),
-          fragment,
+          fragment
         );
 
         editor.update(
           EditorState.push(
             editorState,
             withInsertedText,
-            'insert-fragment',
-          ),
+            'insert-fragment'
+          )
         );
       });
 
@@ -90,11 +90,10 @@ function editOnPaste(editor: DraftEditor, e: SyntheticClipboardEvent): void {
   let textBlocks: Array<string> = [];
   const text = data.getText();
   const html = data.getHTML();
-  const editorState = editor._latestEditorState;
 
   if (
     editor.props.handlePastedText &&
-    isEventHandled(editor.props.handlePastedText(text, html, editorState))
+    isEventHandled(editor.props.handlePastedText(text, html))
   ) {
     return;
   }
@@ -170,17 +169,18 @@ function editOnPaste(editor: DraftEditor, e: SyntheticClipboardEvent): void {
   }
 
   if (textBlocks.length) {
+    var editorState = editor._latestEditorState;
     var character = CharacterMetadata.create({
       style: editorState.getCurrentInlineStyle(),
       entity: getEntityKeyForSelection(
         editorState.getCurrentContent(),
-        editorState.getSelection(),
+        editorState.getSelection()
       ),
     });
 
     var textFragment = DraftPasteProcessor.processText(
       textBlocks,
-      character,
+      character
     );
 
     var textMap = BlockMapBuilder.createFromArray(textFragment);
@@ -196,22 +196,21 @@ function insertFragment(
   var newContent = DraftModifier.replaceWithFragment(
     editorState.getCurrentContent(),
     editorState.getSelection(),
-    fragment,
+    fragment
   );
-  // TODO: merge the entity map once we stop using DraftEntity
-  // like this:
-  // const mergedEntityMap = newContent.getEntityMap().merge(entityMap);
+
+  const mergedEntityMap = newContent.getEntityMap().merge(entityMap);
 
   return EditorState.push(
     editorState,
-    newContent.set('entityMap', entityMap),
-    'insert-fragment',
+    newContent.set('entityMap', mergedEntityMap),
+    'insert-fragment'
   );
 }
 
 function areTextBlocksAndClipboardEqual(
   textBlocks: Array<string>,
-  blockMap: BlockMap,
+  blockMap: BlockMap
 ): boolean {
   return (
     textBlocks.length === blockMap.size &&

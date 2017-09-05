@@ -1,14 +1,14 @@
 {
   "name": "draft-js",
   "description": "A React framework for building text editors.",
-  "version": "0.10.1",
+  "version": "0.11.0-alpha",
   "keywords": [
     "draftjs",
     "editor",
     "react",
     "richtext"
   ],
-  "homepage": "http://draftjs.org/",
+  "homepage": "https://facebook.github.io/draft-js",
   "bugs": "https://github.com/facebook/draft-js/issues",
   "files": [
     "dist/",
@@ -51,8 +51,8 @@
     "eslint-plugin-flowtype": "^2.17.1",
     "eslint-plugin-react": "^5.2.2",
     "fbjs-scripts": "^0.7.0",
-    "flow-bin": "^0.42.0",
-    "gulp": "^3.9.0",
+    "flow-bin": "^0.38.0",
+    "gulp": "^3.9.1",
     "gulp-babel": "^6.1.2",
     "gulp-browserify-thin": "^0.1.5",
     "gulp-clean-css": "^2.0.3",
@@ -66,7 +66,6 @@
     "jest": "^15.1.1",
     "react": "^15.0.0-rc.1",
     "react-dom": "^15.0.0-rc.1",
-    "react-test-renderer": "^15.5.4",
     "run-sequence": "^1.1.2",
     "through2": "^2.0.1",
     "vinyl-buffer": "^1.0.0",
