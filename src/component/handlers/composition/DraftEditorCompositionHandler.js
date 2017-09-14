@@ -142,6 +142,8 @@ var DraftEditorCompositionHandler = {
     // so `compositionTextData` from `compositionend` will be used.
     const composedChars = textInputData || compositionTextData;
     textInputData = '';
+
+    const formerComposedChars = compositionTextData;
     compositionTextData = '';
 
     const editorState = EditorState.set(editor._latestEditorState, {
@@ -167,12 +169,28 @@ var DraftEditorCompositionHandler = {
 
     editor.exitCurrentMode();
 
+    let contentState = editorState.getCurrentContent();
+    let selection = editorState.getSelection();
+    if (formerComposedChars && selection.isCollapsed()) {
+      let anchorOffset = selection.getAnchorOffset() - formerComposedChars.length;
+      if (anchorOffset < 0) {
+        anchorOffset = 0;
+      }
+      const toRemoveSel = selection.merge({anchorOffset});
+      contentState = DraftModifier.removeRange(
+        editorState.getCurrentContent(),
+        toRemoveSel,
+        'backward',
+      );
+      selection = contentState.getSelectionAfter();
+    }
+
     if (composedChars) {
       // If characters have been composed, re-rendering with the update
       // is sufficient to reset the editor.
       const contentState = DraftModifier.replaceText(
-        editorState.getCurrentContent(),
-        editorState.getSelection(),
+        contentState,
+        selection,
         composedChars,
         currentStyle,
         entityKey,

@@ -6588,6 +6588,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    // so `compositionTextData` from `compositionend` will be used.
 	    var composedChars = textInputData || compositionTextData;
 	    textInputData = '';
+
+	    var formerComposedChars = compositionTextData;
 	    compositionTextData = '';
 
 	    var editorState = EditorState.set(editor._latestEditorState, {
@@ -6605,11 +6607,23 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    editor.exitCurrentMode();
 
+	    var contentState = editorState.getCurrentContent();
+	    var selection = editorState.getSelection();
+	    if (formerComposedChars && selection.isCollapsed()) {
+	      var anchorOffset = selection.getAnchorOffset() - formerComposedChars.length;
+	      if (anchorOffset < 0) {
+	        anchorOffset = 0;
+	      }
+	      var toRemoveSel = selection.merge({ anchorOffset: anchorOffset });
+	      contentState = DraftModifier.removeRange(editorState.getCurrentContent(), toRemoveSel, 'backward');
+	      selection = contentState.getSelectionAfter();
+	    }
+
 	    if (composedChars) {
 	      // If characters have been composed, re-rendering with the update
 	      // is sufficient to reset the editor.
-	      var contentState = DraftModifier.replaceText(editorState.getCurrentContent(), editorState.getSelection(), composedChars, currentStyle, entityKey);
-	      editor.update(EditorState.push(editorState, contentState, 'insert-characters'));
+	      var _contentState = DraftModifier.replaceText(_contentState, selection, composedChars, currentStyle, entityKey);
+	      editor.update(EditorState.push(editorState, _contentState, 'insert-characters'));
 	      return;
 	    }
 
@@ -8931,6 +8945,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var nullthrows = __webpack_require__(5);
 
 	var isGecko = UserAgent.isEngine('Gecko');
+	var isAndroid = UserAgent.isPlatform('Android');
 
 	var DOUBLE_NEWLINE = '\n\n';
 
@@ -9043,7 +9058,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	  var anchorOffset, focusOffset, startOffset, endOffset;
 
-	  if (isGecko) {
+	  if (isAndroid || isGecko) {
 	    // Firefox selection does not change while the context menu is open, so
 	    // we preserve the anchor and focus values of the DOM selection.
 	    anchorOffset = domSelection.anchorOffset;
